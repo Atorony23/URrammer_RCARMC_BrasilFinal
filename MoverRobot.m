@@ -1,4 +1,4 @@
-function [jointAngles,H_Actual_Mesa]= MoverRobot(coci,angulo_Gripper,defase_Robot,jointAngles) %falta el "ur"
+function [jointAngles,H_Actual_Mesa]= MoverRobot(coci,angulo_Gripper,defase_Robot,jointAngles,ur) %falta el "ur"
     %Manda la posicion del efector, en donde lo queremos, ocupamos darle los
     %velores de coci = coordenadas_cilindricas(r,theta,h)
     %Punto 3d que el usuario quiere alcanzar
@@ -28,7 +28,7 @@ function [jointAngles,H_Actual_Mesa]= MoverRobot(coci,angulo_Gripper,defase_Robo
     %que lo mandamos "ur", los valores que le mandamos "jointAngles", el
     %tiempo en el que queremos que finalice 'EndTime', y el valor en
     %segundos, en este caso en segundos
-    %[~,~] = sendJointConfigurationAndWait(ur,jointAngles,'EndTime',2);
+    [~,~] = sendJointConfigurationAndWait(ur,jointAngles,'EndTime',2);
 
 end
 
