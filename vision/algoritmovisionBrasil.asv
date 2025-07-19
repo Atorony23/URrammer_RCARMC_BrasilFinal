@@ -1,0 +1,122 @@
+function [x2,y2,z2,OrientacionObjeto] = algoritmovisionBrasil(I,prof,labels,bboxes,m,H_actual)
+
+%function [x2,y2,z2,OrientacionObjeto,max_label] = algoritmoVision(I,prof,labels,bboxes,m,H_actual,zona)
+    %%% Paso 5 Seleccionamos el objeto con mayor precisión
+max_label=labels(m,1);
+max_label = string(max_label);
+disp(max_label)
+%%% Paso 6 Hallamos caja del objeto seleccionado
+bbox = round(bboxes(m,:));
+%%% Paso 7 Creamos una matriz de 0's del tamaño de la imagen 
+MaskYolo = zeros(size(prof));
+%%% Ṕaso 8 convertimos la matriz en NaN%% MaskYolo(:,:) = nan('single');
+% Paso 9 Insertamos una máscara de acuerdo a las dimensiones de la caja
+imgWidth = 640;
+imgHeight = 480;
+% Margen opcional alrededor del bbox
+margin = 5;
+
+% Coordenadas originales del bbox
+x1 = max(1, bbox(1) - margin);
+y1 = max(1, bbox(2) - margin);
+x2 = min(imgWidth, bbox(1) + bbox(3) + margin);
+y2 = min(imgHeight, bbox(2) + bbox(4) + margin);
+
+% Crear máscara vacía
+MaskYolo = zeros(imgHeight, imgWidth);
+
+% Asignar valor 1 dentro del área del bbox
+MaskYolo(y1:y2, x1:x2) = 1;
+
+try 
+    % MaskYolo(bbox(2)-5:bbox(2)+bbox(4)+5,bbox(1)-5:bbox(1)+bbox(3)+5) = 1;
+    % mask3D = repmat(MaskYolo, [1 1 size(I,3)]); % convierte la máscara a 3D
+    I_mask1 = bsxfun(@times, I, cast(MaskYolo, 'like', I));
+   
+catch
+    try
+        MaskYolo(bbox(2):bbox(2)+bbox(4),bbox(1):bbox(1)+bbox(3)) = 1;
+        % mask3D = repmat(MaskYolo, [1 1 size(I,3)]); % convierte la máscara a 3D
+        I_mask1 = bsxfun(@times, I, cast(MaskYolo, 'like', I));
+    catch
+        try
+            MaskYolo(bbox(2)+5:bbox(2)+bbox(4)-5,bbox(1)+5:bbox(1)+bbox(3)-5) = 1;
+            % mask3D = repmat(MaskYolo, [1 1 size(I,3)]); % convierte la máscara a 3D
+            I_mask1 = bsxfun(@times, I, cast(MaskYolo, 'like', I));
+        catch
+            MaskYolo(bbox(2)+10:bbox(2)+bbox(4)-10,bbox(1)+10:bbox(1)+bbox(3)-10) = 1;
+            % mask3D = repmat(MaskYolo, [1 1 size(I,3)]); % convierte la máscara a 3D
+            I_mask1 = bsxfun(@times, I, cast(MaskYolo, 'like', I));
+        end
+    end
+end
+% imshow(MaskYolo)
+imshow(I_mask1)
+
+mask = logical(MaskYolo);
+
+% 2. Expandir la máscara para las 3 coordenadas
+mask3D = repmat(mask, [1 1 3]);  % tamaño: 480x640x3
+
+% 3. Aplicar la máscara: poner NaN donde no se quiere conservar
+prof(~mask3D) = NaN;
+% prof(:,:,3) = -prof(:,:,3);
+% 4. Convertir a objeto pointCloud
+ptCloudMasked = pointCloud(prof);
+ptCloudMasked = removeInvalidPoints(ptCloudMasked);
+% 5. Visualizar
+% pcshow(ptCloudMasked);
+pcshow(ptCloudMasked, VerticalAxis="Y", VerticalAxisDir="Up", ViewPlane="YX",MarkerSize=50)
+title('Nube de puntos con máscara aplicada');
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
+xyz = ptCloudMasked.Location;  % cada fila es [X Y Z]
+
+% Crear máscara lógica para Z >= -0.5
+z = xyz(:,3);
+zMask = (z >= -0.468) & (z <= -0.3);  % valores válidos
+% Aplicar máscara: poner NaN donde Z < -0.5
+xyz(~zMask, :) = NaN;
+
+% Crear nueva nube de puntos filtrada
+ptCloudFiltered = pointCloud(xyz);
+
+% (Opcional) aplicar también a color si existe
+if ~isempty(ptCloudMasked.Color)
+    rgb = ptCloudMasked.Color;  % tamaño: N x 3
+    rgb(~zMask, :) = 0;    % poner negro en los descartados
+    ptCloudFiltered.Color = rgb;
+end
+
+% Visualizar
+pcshow(ptCloudFiltered);
+title('Nube de puntos filtrada por Z ≥ -0.5');
+TGripperRobot = H_actual;
+
+TCameraGripper = [1 0 0   0.00;... 
+                  0 1 0  -0.06;...
+                  0 0 1  -0.10
+                  0 0 0   1.00];
+%Transformada de cámara simulacion ¿
+% TCameraGripper =  [0.999538308921320	-0.0291243522750580	-0.00865685296549709	-0.0319758672156050;
+%                    0.0300542118368598	0.989565288697892	0.140915874744907	-0.0756534035706355;
+%                    0.00446243762679872	-0.141110990035558	0.989983724685215	-0.111774042001070;
+%                     0	0	0	1];
+
+tform = affinetform3d(TGripperRobot*TCameraGripper);
+ptCloudFiltered = pctransform(ptCloudFiltered,tform);
+pcshow(ptCloudFiltered, VerticalAxis="Y", VerticalAxisDir="UP", ViewPlane="XY",MarkerSize=50)
+
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
+xlim([-0.20,0.90])
+ylim([-0.90,0.90])
+model = pcfitcuboid(ptCloudFiltered);
+plot(model)
+OrientacionObjeto = model.Orientation(1,3) *pi/180
+x2 = model.Center(1,1);
+y2 = model.Center(1,2);
+z2 = model.Center(1,3);
+end
