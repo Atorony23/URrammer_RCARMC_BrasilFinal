@@ -3,41 +3,41 @@ function [h_agarre,label] = altura_agarre_Brasil(label,z2)
 %   Detailed explanation goes here
     switch label
         case "Lata" 
-            if z2 > -0.1060
-                h_agarre = 0.09;
+            if z2 > 0.0319
+                h_agarre = 0.087;
                 label = "Lata_parada";
             else 
-                h_agarre = 0.0520;
+                h_agarre = 0.0220;
                 label = "Lata_acostada";
             end
         case "Lata_parada"
-                h_agarre = 0.09;
+                h_agarre = 0.087;
                 label = "Lata_parada";
         case "Lata_acostada"
-                h_agarre = 0.0520;
+                h_agarre = 0.0220;
                 label = "Lata_acostada";
         case "Botella"    
-            if z2 > -0.09
-                h_agarre = 0.15;
+            if z2 > 0.042
+                h_agarre = 0.157;
                 label = "Tapa";
             else       %%%Botella acostada
-                h_agarre = 0.0520;   %%valor z2 = 0.0203
+                h_agarre = 0.0220;   %%valor z2 = 0.0203
             end
         case "Tapa"
-                h_agarre = 0.15;
+                h_agarre = 0.157;
                 label = "Tapa";
         case "Cubo"
             h_agarre = 0.0220;
         case "SPAM"
-            if z2 > -0.11
-                h_agarre = 0.0830;
-            else
-                h_agarre = 0.0350;
-                label = "SPAM_acostado";
-            end
+            % if z2 > -0.11
+                h_agarre = 0.080;
+            % else
+            %     h_agarre = 0.0350;
+            %     label = "SPAM_acostado";
+            % end
         case "Plumon"
-            if z2>-0.05 %%parado
-                h_agarre =  0.10;
+            if z2>0.0050 %%parado
+                h_agarre =  0.08;
             else 
                 h_agarre = 0.0220;
             end

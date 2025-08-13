@@ -1,4 +1,4 @@
-function [jointAngles,coci,colorLabel]=bascula(coci,angulo_Gripper,defase_Robot,jointAngles,ur,realsense)
+function [jointAngles,coci]=bascula(coci,angulo_Gripper,defase_Robot,jointAngles,ur)
     %Se movera sobre la bascula
     puntosBasc = [-0.05, 0.56, 0.35]; %coord xyz de la bascula>>>>>------CAMBIAR------<<<<<<<
     n = 0.300;
@@ -14,9 +14,6 @@ function [jointAngles,coci,colorLabel]=bascula(coci,angulo_Gripper,defase_Robot,
 
     %Cerramos gripper
     actuateGripper(ur,'grip');
-    %%Toma una foto
-    [rgb, ~, ~]=realSense.step;
-    colorLabel = detectar_color(rgb);
 
     %se activa despues la funcio "sube"
 end

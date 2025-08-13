@@ -1,4 +1,4 @@
-function [x2,y2,z2,OrientacionObjeto,max_label] = algoritmovisionBrasil(I,nube,labels,bboxes,m,H_actual,label)
+function [x2,y2,z2,OrientacionObjeto,max_label] = algoritmovisionBrasil2(I,nube,labels,bboxes,m,H_actual,label)
     %function [x2,y2,z2,OrientacionObjeto,max_label] = algoritmoVision(I,prof,labels,bboxes,m,H_actual,zona)
     max_label=labels(m,1);
     max_label = string(max_label);
@@ -52,8 +52,8 @@ function [x2,y2,z2,OrientacionObjeto,max_label] = algoritmovisionBrasil(I,nube,l
     end
     % imshow(MaskYolo)
     imshow(I_mask1)
-    % [Ij,~] = mascara_color_mesa(I);
-    % MaskYolo = Ij & MaskYolo;
+    [Ij,~] = mascara_caja_azul3(I);
+    MaskYolo = Ij & MaskYolo;
     mask = logical(MaskYolo);
     
     % 2. Expandir la máscara para las 3 coordenadas
@@ -116,7 +116,7 @@ function [x2,y2,z2,OrientacionObjeto,max_label] = algoritmovisionBrasil(I,nube,l
     else
         filtro = -0.05;
     end
-    
+    filtro=filtro+0.02;
 
     zMask = (z >= filtro) & (z <= 0.3);  % valores válidos465
     % zMask = (z >= -0.4) & (z <= -0.3);  % valores válidos
@@ -152,7 +152,7 @@ function [x2,y2,z2,OrientacionObjeto,max_label] = algoritmovisionBrasil(I,nube,l
 
     model = pcfitcuboid(ptCloudFiltered2);
     plot(model)
-    OrientacionObjeto = model.Orientation(1,3);% *pi/180;
+    OrientacionObjeto = model.Orientation(1,3) *pi/180;
     x2 = model.Center(1,1);
     y2 = model.Center(1,2);
     z2 = model.Center(1,3);
